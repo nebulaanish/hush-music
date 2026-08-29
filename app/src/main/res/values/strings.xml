@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Hush Music</string>
+    <string name="splash_title">Hush</string>
+    <string name="splash_subtitle">MUSIC PLAYER</string>
+    <string name="switch_tab">Switch between Music and YouTube</string>
+    <string name="tab_music">Music</string>
+    <string name="tab_video">YouTube</string>
+    <string name="playing_background">Playing in background</string>
+    <string name="channel_name">Background playback</string>
+</resources>
