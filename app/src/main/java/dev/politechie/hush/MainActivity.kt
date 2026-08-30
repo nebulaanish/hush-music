@@ -90,6 +90,21 @@ class MainActivity : AppCompatActivity() {
             this, Intent(this, PlaybackService::class.java).setAction("start")
         )
         askBatteryExemption()
+        handleTestDownload(intent)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleTestDownload(intent)
+    }
+
+    // TEMPORARY test hook, to be removed once the Downloads UI exists:
+    //   adb shell am start -n dev.politechie.hush/.MainActivity \
+    //     -e hush_dl "<url>" -e hush_audio true
+    private fun handleTestDownload(intent: Intent?) {
+        val url = intent?.getStringExtra("hush_dl") ?: return
+        val audio = intent.getStringExtra("hush_audio") == "true"
+        Downloads.start(this, url, audio)
     }
 
     private fun attach(w: WebView) {
