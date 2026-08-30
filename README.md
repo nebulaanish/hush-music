@@ -2,10 +2,6 @@
 
 YouTube Music and YouTube on Android, playing in the background, without ads.
 
-<p align="center">
-  <img src="docs/demo.gif" width="250" alt="Playing a track, then switching to the YouTube tab with the floating switcher">
-</p>
-
 A small app (4.6 MB) that wraps both sites and adds the two things the mobile web is missing:
 playback that keeps going when you leave the screen, and real media controls.
 
@@ -18,12 +14,6 @@ playback that keeps going when you leave the screen, and real media controls.
 - **Both in one app** — YouTube Music and YouTube side by side, and switching between them never
   interrupts what is playing.
 - **Sign in with Google** — your playlists, history and recommendations, as normal.
-
-<p align="center">
-  <img src="docs/notification.png" width="430" alt="Notification with album art, title, previous, pause, next and a seek bar">
-  <br>
-  <sub>The same card appears on the lock screen.</sub>
-</p>
 
 ## Install
 
