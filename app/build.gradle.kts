@@ -62,6 +62,7 @@ android {
 dependencies {
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("com.google.android.material:material:1.12.0")
+    implementation("androidx.recyclerview:recyclerview:1.3.2")
 
     // yt-dlp, bundled with its own Python. Chosen because it updates its extractor at
     // runtime, so YouTube breaking downloads does not mean shipping a new APK.

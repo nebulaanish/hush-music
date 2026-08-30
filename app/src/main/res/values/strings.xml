@@ -22,5 +22,11 @@
     <string name="resolving">Reading…</string>
     <string name="queued">Queued %1$d</string>
     <string name="downloads_videos">Videos</string>
+    <string name="delete">Delete</string>
+    <string name="delete_n">Delete %1$d</string>
+    <string name="delete_one">Delete “%1$s”?</string>
+    <string name="delete_many">Delete %1$d downloads?</string>
+    <string name="play">Play</string>
+    <string name="pause">Pause</string>
     <string name="no_downloads">Nothing downloaded yet.\nDownloads are saved to your Music and Movies folders.</string>
 </resources>

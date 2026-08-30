@@ -32,6 +32,16 @@ class DownloadService : Service() {
         }
 
         val pending: Int get() = queue.size
+
+        /** What the queue is doing right now, for the in-app banner. */
+        @Volatile var activeTitle: String? = null
+            private set
+        @Volatile var activePercent: Int = 0
+            private set
+        @Volatile var activeIndex: Int = 0
+            private set
+        @Volatile var activeTotal: Int = 0
+            private set
     }
 
     @Volatile private var worker: Thread? = null
@@ -60,14 +70,20 @@ class DownloadService : Service() {
     private fun drain() {
         while (true) {
             val item = queue.poll() ?: break
+            activeTitle = item.title
+            activePercent = 0
+            activeIndex = done + 1
+            activeTotal = total
             notify(item.title, 0)
             val file = Downloads.downloadNow(this, Resolver.watchUrl(item.id), item.audioOnly) { p ->
+                activePercent = p.toInt()
                 notify(item.title, p.toInt())
             }
             if (file != null) Library.publish(this, file, item.audioOnly)
             done++
         }
         worker = null
+        activeTitle = null
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
     }

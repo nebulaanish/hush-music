@@ -31,6 +31,8 @@ object LocalPlayer {
     private var queue: List<LibraryItem> = emptyList()
     private var index = 0
     private var art: Bitmap? = null
+    private var tagTitle: String? = null
+    private var tagArtist: String? = null
 
     var isActive = false
         private set
@@ -63,6 +65,7 @@ object LocalPlayer {
         release()
         isActive = true
         art = readArt(ctx, item)
+        readTags(ctx, item)
         mp = MediaPlayer().apply {
             setAudioAttributes(
                 AudioAttributes.Builder()
@@ -101,7 +104,14 @@ object LocalPlayer {
         val playing = runCatching { player.isPlaying }.getOrDefault(false)
         val pos = runCatching { player.currentPosition }.getOrDefault(0)
         val dur = runCatching { player.duration }.getOrDefault(0)
-        PlaybackService.updateLocal(playing, item.title, "", art, pos, dur.coerceAtLeast(0))
+        PlaybackService.updateLocal(
+            playing,
+            tagTitle ?: item.title,
+            tagArtist.orEmpty(),
+            art,
+            pos,
+            dur.coerceAtLeast(0)
+        )
     }
 
     fun command(action: String, arg: Int) {
@@ -143,6 +153,26 @@ object LocalPlayer {
     private fun release() {
         runCatching { mp?.release() }
         mp = null
+    }
+
+    val isPlaying: Boolean get() = runCatching { mp?.isPlaying == true }.getOrDefault(false)
+
+    val nowPlayingTitle: String? get() = if (isActive) (tagTitle ?: current?.title) else null
+
+    val nowPlayingArt: Bitmap? get() = if (isActive) art else null
+
+    private fun readTags(ctx: Context, item: LibraryItem) {
+        tagTitle = null
+        tagArtist = null
+        runCatching {
+            MediaMetadataRetriever().use { r ->
+                r.setDataSource(ctx, item.uri)
+                tagTitle = r.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)
+                    ?.takeIf { it.isNotBlank() }
+                tagArtist = r.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST)
+                    ?.takeIf { it.isNotBlank() }
+            }
+        }
     }
 
     private fun readArt(ctx: Context, item: LibraryItem): Bitmap? =

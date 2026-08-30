@@ -248,6 +248,8 @@ object Players {
         fun state(playing: Boolean, title: String, artist: String, art: String, pos: Int, dur: Int) {
             // Both tabs report every second. Without this guard the idle tab's "paused"
             // lands a second after the playing tab's "playing" and wipes out the session.
+            // Starting a page takes over from a downloaded file; two at once is never wanted.
+            if (playing && LocalPlayer.isActive) main.post { LocalPlayer.stop() }
             if (playing) playingIn = web else if (playingIn !== web) return
             PlaybackService.update(playing, title, artist, art, pos, dur)
         }

@@ -72,7 +72,8 @@ object Library {
             ctx.contentResolver.query(
                 collection,
                 projection,
-                "${MediaStore.MediaColumns.RELATIVE_PATH} LIKE ?",
+                "${MediaStore.MediaColumns.RELATIVE_PATH} LIKE ? AND " +
+                    "${MediaStore.MediaColumns.IS_TRASHED} = 0",
                 arrayOf("${if (audio) MUSIC_PATH else VIDEO_PATH}%"),
                 "${MediaStore.MediaColumns.DATE_ADDED} DESC"
             )?.use { c ->
