@@ -64,6 +64,10 @@ object Downloads {
             addOption("-o", "${dir.absolutePath}/%(title)s.%(ext)s")
             addOption("--no-playlist")
             addOption("--no-mtime")
+            // ffmpeg is bundled, so the cover art and tags go into the file itself and
+            // every player — ours and the phone's — has something to show.
+            addOption("--embed-thumbnail")
+            addOption("--embed-metadata")
             if (audioOnly) {
                 addOption("-f", "bestaudio[ext=m4a]/bestaudio")
             } else {

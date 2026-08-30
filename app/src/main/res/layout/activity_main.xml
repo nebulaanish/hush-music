@@ -12,13 +12,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/nav"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        app:menu="@menu/bottom_nav" />
-
     <!-- Right edge, vertically centred: the one strip neither site puts controls in. -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab"
@@ -27,7 +20,6 @@
         android:layout_gravity="end|center_vertical"
         android:layout_marginEnd="12dp"
         android:alpha="0.85"
-        android:visibility="gone"
         app:fabSize="mini" />
 
     <LinearLayout

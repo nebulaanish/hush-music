@@ -51,6 +51,11 @@ object Library {
         }.onFailure { Log.e(TAG, "publish failed for ${file.name}", it) }.getOrNull()
     }
 
+    /** MediaStore renders these itself, which covers files with no embedded cover art. */
+    fun thumbnail(ctx: Context, uri: Uri, px: Int): android.graphics.Bitmap? = runCatching {
+        ctx.contentResolver.loadThumbnail(uri, android.util.Size(px, px), null)
+    }.getOrNull()
+
     fun list(ctx: Context, audio: Boolean): List<LibraryItem> {
         val collection = if (audio) {
             MediaStore.Audio.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)

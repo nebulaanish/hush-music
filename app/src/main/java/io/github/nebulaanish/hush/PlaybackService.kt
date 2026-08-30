@@ -21,17 +21,23 @@ private const val CHANNEL = "playback"
 private const val NOTIF_ID = 1
 
 /**
- * Bridges the WebView's HTML5 player to a real MediaSession, which is what gives us
- * notification + lock screen controls, headset buttons, and a foreground service the
- * system actually respects (Android 14+ expects a MediaSession behind `mediaPlayback`).
+ * One MediaSession for everything that plays: the WebView pages and the downloaded files
+ * both feed it. That is what makes downloads background and appear on the lock screen the
+ * same way streaming does, rather than being a second-class player.
  */
 class PlaybackService : Service() {
 
     companion object {
         private var instance: PlaybackService? = null
 
+        /** Reported by the web players, whose artwork is a URL. */
         fun update(playing: Boolean, title: String, artist: String, art: String, pos: Int, dur: Int) {
-            instance?.publish(playing, title, artist, art, pos, dur)
+            instance?.publishWeb(playing, title, artist, art, pos, dur)
+        }
+
+        /** Reported by [LocalPlayer], whose artwork is already decoded from the file. */
+        fun updateLocal(playing: Boolean, title: String, artist: String, art: Bitmap?, pos: Int, dur: Int) {
+            instance?.publishLocal(playing, title, artist, art, pos, dur)
         }
     }
 
@@ -43,7 +49,7 @@ class PlaybackService : Service() {
     private var artist = ""
     private var pos = 0
     private var dur = 0
-    private var artUrl = ""
+    private var artKey = ""
     private var artBmp: Bitmap? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -57,32 +63,49 @@ class PlaybackService : Service() {
         )
         session = MediaSession(this, "hush").apply {
             setCallback(object : MediaSession.Callback() {
-                override fun onPlay() { Players.command("play", 0) }
-                override fun onPause() { Players.command("pause", 0) }
-                override fun onSkipToNext() { Players.command("nexttrack", 0) }
-                override fun onSkipToPrevious() { Players.command("previoustrack", 0) }
-                override fun onStop() { Players.command("pause", 0) }
-                override fun onSeekTo(p: Long) { Players.command("seek", (p / 1000).toInt()) }
+                override fun onPlay() = dispatch("play", 0)
+                override fun onPause() = dispatch("pause", 0)
+                override fun onSkipToNext() = dispatch("nexttrack", 0)
+                override fun onSkipToPrevious() = dispatch("previoustrack", 0)
+                override fun onStop() = dispatch("pause", 0)
+                override fun onSeekTo(p: Long) = dispatch("seek", (p / 1000).toInt())
             })
             isActive = true
         }
     }
 
+    /** Whichever source is actually playing gets the button press. */
+    private fun dispatch(action: String, arg: Int) {
+        if (LocalPlayer.isActive) LocalPlayer.command(action, arg) else Players.command(action, arg)
+    }
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        // Notification button taps come back here as service intents.
-        intent?.action?.takeIf { it != "start" }?.let { Players.command(it, 0) }
+        intent?.action?.takeIf { it != "start" }?.let { dispatch(it, 0) }
         startForeground(NOTIF_ID, build())
         return START_STICKY
     }
 
-    private fun publish(playing: Boolean, title: String, artist: String, art: String, pos: Int, dur: Int) {
+    private fun publishWeb(playing: Boolean, title: String, artist: String, art: String, pos: Int, dur: Int) {
+        if (LocalPlayer.isActive) return    // a downloaded file is playing; ignore the pages
+        fetchArt(art)
+        render(playing, title, artist, pos, dur)
+    }
+
+    private fun publishLocal(playing: Boolean, title: String, artist: String, art: Bitmap?, pos: Int, dur: Int) {
+        if (artKey != "local:$title") {
+            artKey = "local:$title"
+            artBmp = art
+        }
+        render(playing, title, artist, pos, dur)
+    }
+
+    private fun render(playing: Boolean, title: String, artist: String, pos: Int, dur: Int) {
         val changed = playing != this.playing || title != this.title || dur != this.dur
         this.playing = playing
         this.title = title
         this.artist = artist
         this.pos = pos
         this.dur = dur
-        fetchArt(art)
 
         session.setPlaybackState(
             PlaybackState.Builder()
@@ -97,38 +120,33 @@ class PlaybackService : Service() {
                 )
                 .build()
         )
-        if (changed) {
-            session.setMetadata(
-                MediaMetadata.Builder()
-                    .putString(MediaMetadata.METADATA_KEY_TITLE, title)
-                    .putString(MediaMetadata.METADATA_KEY_ARTIST, artist)
-                    .putLong(MediaMetadata.METADATA_KEY_DURATION, dur.toLong())
-                    .putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, artBmp)
-                    .build()
-            )
-        }
+        if (changed) setMetadata()
         getSystemService(NotificationManager::class.java).notify(NOTIF_ID, build())
+    }
+
+    private fun setMetadata() {
+        session.setMetadata(
+            MediaMetadata.Builder()
+                .putString(MediaMetadata.METADATA_KEY_TITLE, title)
+                .putString(MediaMetadata.METADATA_KEY_ARTIST, artist)
+                .putLong(MediaMetadata.METADATA_KEY_DURATION, dur.toLong())
+                .putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, artBmp)
+                .build()
+        )
     }
 
     /** Album art for the lock screen. One in-flight fetch, keyed on the URL we last saw. */
     private fun fetchArt(url: String) {
-        if (url == artUrl) return
-        artUrl = url
+        if (url == artKey) return
+        artKey = url
         artBmp = null
         if (!url.startsWith("https://")) return
         Thread {
             val bmp = runCatching { URL(url).openStream().use(BitmapFactory::decodeStream) }.getOrNull()
             main.post {
-                if (url == artUrl && bmp != null) {
+                if (url == artKey && bmp != null) {
                     artBmp = bmp
-                    session.setMetadata(
-                        MediaMetadata.Builder()
-                            .putString(MediaMetadata.METADATA_KEY_TITLE, title)
-                            .putString(MediaMetadata.METADATA_KEY_ARTIST, artist)
-                            .putLong(MediaMetadata.METADATA_KEY_DURATION, dur.toLong())
-                            .putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, bmp)
-                            .build()
-                    )
+                    setMetadata()
                     getSystemService(NotificationManager::class.java).notify(NOTIF_ID, build())
                 }
             }
@@ -154,7 +172,7 @@ class PlaybackService : Service() {
         .setContentTitle(title.ifEmpty { getString(R.string.app_name) })
         .setContentText(artist.ifEmpty { getString(R.string.playing_background) })
         .setLargeIcon(artBmp)
-        .setVisibility(Notification.VISIBILITY_PUBLIC)   // show on the lock screen
+        .setVisibility(Notification.VISIBILITY_PUBLIC)
         .setOngoing(playing)
         .setContentIntent(
             PendingIntent.getActivity(
@@ -172,6 +190,7 @@ class PlaybackService : Service() {
 
     /** Swiping the app out of Recents is the quit gesture: stop everything. */
     override fun onTaskRemoved(rootIntent: Intent?) {
+        LocalPlayer.stop()
         Players.releaseAll()
         stopSelf()
         super.onTaskRemoved(rootIntent)

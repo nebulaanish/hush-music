@@ -22,7 +22,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlin.math.abs
 
@@ -33,12 +32,8 @@ import kotlin.math.abs
 class MainActivity : AppCompatActivity() {
 
     private lateinit var container: FrameLayout
-    private lateinit var nav: BottomNavigationView
     private lateinit var fab: FloatingActionButton
     private lateinit var current: WebView
-
-    private var navCollapsed = false
-    private var autoCollapsed = false
 
     private var customView: View? = null
     private var customCallback: WebChromeClient.CustomViewCallback? = null
@@ -50,7 +45,6 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         container = findViewById(R.id.container)
-        nav = findViewById(R.id.nav)
         fab = findViewById(R.id.fab)
         Players.host = this
 
@@ -60,21 +54,16 @@ class MainActivity : AppCompatActivity() {
         Players.videoView?.let { attach(it); it.visibility = View.GONE }
         if (Players.musicView?.url != null) hideSplash()
 
-        nav.setOnItemSelectedListener { item ->
-            switchTo(if (item.itemId == R.id.tab_music) Players.music(this) else Players.video(this))
-            collapseNav()
-            true
-        }
         // The button does not decide for you: it reopens the same two-option switcher.
         fab.setOnClickListener { Sheets.showMenu(this) }
         fab.setImageResource(R.drawable.ic_menu)
         fab.contentDescription = getString(R.string.switch_tab)
         makeDraggable(fab)
+        restoreFabPosition()
 
         onBackPressedDispatcher.addCallback(this) {
             when {
                 customView != null -> exitFullscreen()
-                navCollapsed && nav.visibility == View.VISIBLE -> collapseNav()
                 current.canGoBack() -> current.goBack()
                 else -> moveTaskToBack(true)
             }
@@ -134,32 +123,6 @@ class MainActivity : AppCompatActivity() {
     /** Called from [Players] when the music page finishes its first load. */
     fun onFirstPageLoaded() = hideSplash()
 
-    /** Called from [Players] whenever a page reports audible playback. */
-    fun onPlaybackStarted() {
-        // Only the first time: this reports every second, and re-collapsing on each
-        // report would slam the chooser shut a second after the user opened it.
-        if (!autoCollapsed) collapseNav()
-    }
-
-    /** Once you're playing or you've picked a tab, the bar has done its job. */
-    private fun collapseNav() {
-        navCollapsed = true
-        autoCollapsed = true
-        if (nav.visibility != View.VISIBLE) return
-        nav.animate().translationY(nav.height.toFloat()).alpha(0f).setDuration(220)
-            .withEndAction { nav.visibility = View.GONE }
-        fab.show()
-        restoreFabPosition()
-    }
-
-    private fun expandNav() {
-        nav.alpha = 0f
-        nav.translationY = nav.height.toFloat()
-        nav.visibility = View.VISIBLE
-        nav.animate().translationY(0f).alpha(1f).setDuration(200)
-        fab.hide()
-    }
-
     fun enterFullscreen(view: View, callback: WebChromeClient.CustomViewCallback) {
         if (customView != null) {
             callback.onCustomViewHidden()
@@ -173,7 +136,6 @@ class MainActivity : AppCompatActivity() {
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT
             )
         )
-        nav.visibility = View.GONE
         fab.hide()
         bars.hide(WindowInsetsCompat.Type.systemBars())
         bars.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
@@ -192,7 +154,7 @@ class MainActivity : AppCompatActivity() {
         bars.show(WindowInsetsCompat.Type.systemBars())
         window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-        if (navCollapsed) fab.show() else nav.visibility = View.VISIBLE
+        fab.show()
     }
 
     private fun hideSplash() {

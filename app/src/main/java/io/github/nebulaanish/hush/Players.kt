@@ -250,7 +250,6 @@ object Players {
             // lands a second after the playing tab's "playing" and wipes out the session.
             if (playing) playingIn = web else if (playingIn !== web) return
             PlaybackService.update(playing, title, artist, art, pos, dur)
-            if (playing) main.post { host?.onPlaybackStarted() }
         }
     }
 }
