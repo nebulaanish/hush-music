@@ -1,4 +1,4 @@
-package dev.politechie.hush
+package io.github.nebulaanish.hush
 
 import android.content.Context
 import android.os.Handler
@@ -31,43 +31,8 @@ object Downloads {
      */
     fun start(ctx: Context, url: String, audioOnly: Boolean, onDone: (File?) -> Unit = {}) {
         val app = ctx.applicationContext
-        val dir = if (audioOnly) musicDir(app) else videoDir(app)
-
-        Log.d(TAG, "download requested: $url audioOnly=$audioOnly")
         Thread {
-            Log.d(TAG, "download thread entered")
-            val request = YoutubeDLRequest(url).apply {
-                addOption("-o", "${dir.absolutePath}/%(title)s.%(ext)s")
-                addOption("--no-playlist")
-                addOption("--no-mtime")
-                if (audioOnly) {
-                    addOption("-f", "bestaudio[ext=m4a]/bestaudio")
-                } else {
-                    // ponytail: capped at 1080p. 4K on a phone costs gigabytes for
-                    // detail the screen cannot show. Raise it if that ever matters.
-                    addOption(
-                        "-f",
-                        "bestvideo[ext=mp4][height<=1080]+bestaudio[ext=m4a]/best[height<=1080]/best"
-                    )
-                    addOption("--merge-output-format", "mp4")
-                }
-            }
-            val result = runCatching {
-                YoutubeDL.getInstance().execute(request) { progress, eta, line ->
-                    Log.d(TAG, "progress=$progress eta=$eta  $line")
-                }
-            }
-            // Newest file wins rather than diffing the directory: yt-dlp reports
-            // "has already been downloaded" and adds nothing when the file is present,
-            // which a diff reads as failure. --no-mtime keeps mtime as download time.
-            val file = dir.listFiles()
-                ?.filter { it.isFile }
-                ?.maxByOrNull { it.lastModified() }
-                ?.takeIf { result.isSuccess }
-
-            result.onFailure { Log.e(TAG, "download failed: $url", it) }
-            result.onSuccess { Log.d(TAG, "download finished -> $file (exit ${it.exitCode})") }
-
+            val file = downloadNow(app, url, audioOnly)
             main.post {
                 Toast.makeText(
                     app,
@@ -77,6 +42,53 @@ object Downloads {
                 onDone(file)
             }
         }.start()
+    }
+
+    /**
+     * Blocking. Returns the finished file, or null on failure.
+     *
+     * @param audioOnly true for the Music tab: keeps the m4a stream as-is rather than
+     *   transcoding to mp3, which would cost CPU to produce a worse file.
+     */
+    fun downloadNow(
+        ctx: Context,
+        url: String,
+        audioOnly: Boolean,
+        onProgress: (Float) -> Unit = {}
+    ): File? {
+        val app = ctx.applicationContext
+        val dir = if (audioOnly) musicDir(app) else videoDir(app)
+        Log.d(TAG, "download start: $url audioOnly=$audioOnly")
+
+        val request = YoutubeDLRequest(url).apply {
+            addOption("-o", "${dir.absolutePath}/%(title)s.%(ext)s")
+            addOption("--no-playlist")
+            addOption("--no-mtime")
+            if (audioOnly) {
+                addOption("-f", "bestaudio[ext=m4a]/bestaudio")
+            } else {
+                // ponytail: capped at 1080p. 4K on a phone costs gigabytes for
+                // detail the screen cannot show. Raise it if that ever matters.
+                addOption(
+                    "-f",
+                    "bestvideo[ext=mp4][height<=1080]+bestaudio[ext=m4a]/best[height<=1080]/best"
+                )
+            }
+        }
+        val result = runCatching {
+            YoutubeDL.getInstance().execute(request) { progress, _, _ ->
+                if (progress >= 0) onProgress(progress)
+            }
+        }
+        result.onFailure { Log.e(TAG, "download failed: $url", it) }
+
+        // Newest file wins rather than diffing the directory: yt-dlp reports
+        // "has already been downloaded" and adds nothing when the file is present,
+        // which a diff reads as failure. --no-mtime keeps mtime as download time.
+        return dir.listFiles()
+            ?.filter { it.isFile }
+            ?.maxByOrNull { it.lastModified() }
+            ?.takeIf { result.isSuccess }
     }
 
     /**

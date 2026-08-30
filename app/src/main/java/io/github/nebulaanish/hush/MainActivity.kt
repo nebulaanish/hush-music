@@ -1,4 +1,4 @@
-package dev.politechie.hush
+package io.github.nebulaanish.hush
 
 import android.Manifest
 import android.content.Intent
@@ -66,7 +66,7 @@ class MainActivity : AppCompatActivity() {
             true
         }
         // The button does not decide for you: it reopens the same two-option switcher.
-        fab.setOnClickListener { expandNav() }
+        fab.setOnClickListener { Sheets.showMenu(this) }
         fab.setImageResource(R.drawable.ic_swap)
         fab.contentDescription = getString(R.string.switch_tab)
         makeDraggable(fab)
@@ -99,7 +99,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     // TEMPORARY test hook, to be removed once the Downloads UI exists:
-    //   adb shell am start -n dev.politechie.hush/.MainActivity \
+    //   adb shell am start -n io.github.nebulaanish.hush/.MainActivity \
     //     -e hush_dl "<url>" -e hush_audio true
     private fun handleTestDownload(intent: Intent?) {
         val url = intent?.getStringExtra("hush_dl") ?: return
@@ -114,6 +114,14 @@ class MainActivity : AppCompatActivity() {
                 FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT
             )
         )
+    }
+
+    fun currentUrl(): String? = current.url
+
+    fun isMusicTab(): Boolean = current === Players.musicView
+
+    fun showTab(music: Boolean) {
+        switchTo(if (music) Players.music(this) else Players.video(this))
     }
 
     private fun switchTo(target: WebView) {

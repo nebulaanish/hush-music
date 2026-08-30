@@ -1,4 +1,4 @@
-package dev.politechie.hush
+package io.github.nebulaanish.hush
 
 import android.app.Application
 import android.util.Log

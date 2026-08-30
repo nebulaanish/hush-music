@@ -12,11 +12,11 @@ val keystoreProps = Properties().apply {
 }
 
 android {
-    namespace = "dev.politechie.hush"
+    namespace = "io.github.nebulaanish.hush"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "dev.politechie.hush"
+        applicationId = "io.github.nebulaanish.hush"
         minSdk = 26
         targetSdk = 36
         versionCode = 1

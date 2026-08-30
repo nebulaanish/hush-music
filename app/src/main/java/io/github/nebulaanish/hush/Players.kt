@@ -1,4 +1,4 @@
-package dev.politechie.hush
+package io.github.nebulaanish.hush
 
 import android.annotation.SuppressLint
 import android.content.Context

@@ -7,4 +7,20 @@
     <string name="tab_video">YouTube</string>
     <string name="playing_background">Playing in background</string>
     <string name="channel_name">Background playback</string>
+    <string name="channel_downloads">Downloads</string>
+    <string name="downloading">Downloading</string>
+    <string name="download_this">Download this</string>
+    <string name="downloads">Downloads</string>
+    <string name="scope_track">This track</string>
+    <string name="scope_playlist">This playlist (%1$d)</string>
+    <string name="kind_audio">Audio</string>
+    <string name="kind_video">Video</string>
+    <string name="select_all">Select all</string>
+    <string name="select_none">Select none</string>
+    <string name="download_n">Download %1$d</string>
+    <string name="nothing_to_download">Nothing here to download</string>
+    <string name="resolving">Reading…</string>
+    <string name="queued">Queued %1$d</string>
+    <string name="downloads_videos">Videos</string>
+    <string name="no_downloads">Nothing downloaded yet</string>
 </resources>

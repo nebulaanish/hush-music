@@ -87,7 +87,7 @@ Useful, and one trap worth knowing.
 adb shell dumpsys media_session | grep -oE "state=PLAYING\(3\), position=[0-9]+"
 
 # Is the foreground service alive?
-adb shell dumpsys activity services dev.politechie.hush | grep isForeground
+adb shell dumpsys activity services io.github.nebulaanish.hush | grep isForeground
 
 # Chooser and floating button visibility (first flag: V visible, G gone)
 adb shell dumpsys activity top | grep -E "BottomNavigationView\{|app:id/fab" | awk '{print $1, $2}'
