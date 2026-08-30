@@ -32,7 +32,7 @@ object Downloads {
     fun start(ctx: Context, url: String, audioOnly: Boolean, onDone: (File?) -> Unit = {}) {
         val app = ctx.applicationContext
         Thread {
-            val file = downloadNow(app, url, audioOnly)
+            val file = downloadNow(app, url, audioOnly)?.also { Library.publish(app, it, audioOnly) }
             main.post {
                 Toast.makeText(
                     app,

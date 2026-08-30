@@ -61,9 +61,10 @@ class DownloadService : Service() {
         while (true) {
             val item = queue.poll() ?: break
             notify(item.title, 0)
-            Downloads.downloadNow(this, Resolver.watchUrl(item.id), item.audioOnly) { p ->
+            val file = Downloads.downloadNow(this, Resolver.watchUrl(item.id), item.audioOnly) { p ->
                 notify(item.title, p.toInt())
             }
+            if (file != null) Library.publish(this, file, item.audioOnly)
             done++
         }
         worker = null

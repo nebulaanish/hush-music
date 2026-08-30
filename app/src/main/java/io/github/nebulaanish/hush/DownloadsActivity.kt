@@ -9,14 +9,13 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
-import java.io.File
 
 /** The downloaded library: music on one side, videos on the other. */
 class DownloadsActivity : AppCompatActivity() {
 
     private lateinit var list: ListView
     private lateinit var empty: TextView
-    private var files: List<File> = emptyList()
+    private var items: List<LibraryItem> = emptyList()
     private var showingMusic = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -60,7 +59,7 @@ class DownloadsActivity : AppCompatActivity() {
         list.setOnItemClickListener { _, _, position, _ ->
             startActivity(
                 Intent(this, PlayerActivity::class.java)
-                    .putExtra("path", files[position].absolutePath)
+                    .putExtra("uri", items[position].uri.toString())
             )
         }
         toggle.check(R.id.tab_music)
@@ -72,13 +71,12 @@ class DownloadsActivity : AppCompatActivity() {
     }
 
     private fun refresh() {
-        val dir = if (showingMusic) Downloads.musicDir(this) else Downloads.videoDir(this)
-        files = dir.listFiles()?.filter { it.isFile }?.sortedByDescending { it.lastModified() } ?: emptyList()
+        items = Library.list(this, showingMusic)
         list.adapter = ArrayAdapter(
             this,
             android.R.layout.simple_list_item_1,
-            files.map { it.nameWithoutExtension }
+            items.map { it.title }
         )
-        empty.visibility = if (files.isEmpty()) android.view.View.VISIBLE else android.view.View.GONE
+        empty.visibility = if (items.isEmpty()) android.view.View.VISIBLE else android.view.View.GONE
     }
 }

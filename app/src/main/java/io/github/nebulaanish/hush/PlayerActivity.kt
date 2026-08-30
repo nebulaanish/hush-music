@@ -13,7 +13,8 @@ class PlayerActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val path = intent.getStringExtra("path") ?: run { finish(); return }
+        val uri = intent.getStringExtra("uri")?.let(android.net.Uri::parse)
+            ?: run { finish(); return }
 
         val video = VideoView(this)
         setContentView(video)
@@ -21,7 +22,7 @@ class PlayerActivity : AppCompatActivity() {
             it.setAnchorView(video)
             video.setMediaController(it)
         }
-        video.setVideoPath(path)
+        video.setVideoURI(uri)
         video.setOnPreparedListener { video.start() }
     }
 }

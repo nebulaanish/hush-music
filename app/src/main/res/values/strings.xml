@@ -22,5 +22,5 @@
     <string name="resolving">Reading…</string>
     <string name="queued">Queued %1$d</string>
     <string name="downloads_videos">Videos</string>
-    <string name="no_downloads">Nothing downloaded yet</string>
+    <string name="no_downloads">Nothing downloaded yet.\nDownloads are saved to your Music and Movies folders.</string>
 </resources>

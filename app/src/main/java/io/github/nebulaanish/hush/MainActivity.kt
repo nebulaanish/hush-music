@@ -67,7 +67,7 @@ class MainActivity : AppCompatActivity() {
         }
         // The button does not decide for you: it reopens the same two-option switcher.
         fab.setOnClickListener { Sheets.showMenu(this) }
-        fab.setImageResource(R.drawable.ic_swap)
+        fab.setImageResource(R.drawable.ic_menu)
         fab.contentDescription = getString(R.string.switch_tab)
         makeDraggable(fab)
 
