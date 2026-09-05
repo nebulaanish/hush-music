@@ -75,11 +75,17 @@ class DownloadService : Service() {
             activeIndex = done + 1
             activeTotal = total
             notify(item.title, 0)
+            Analytics.downloadStarted(item.audioOnly)
             val file = Downloads.downloadNow(this, Resolver.watchUrl(item.id), item.audioOnly) { p ->
                 activePercent = p.toInt()
                 notify(item.title, p.toInt())
             }
-            if (file != null) Library.publish(this, file, item.audioOnly)
+            if (file != null) {
+                Library.publish(this, file, item.audioOnly)
+                Analytics.downloadCompleted(item.audioOnly)
+            } else {
+                Analytics.downloadFailed(item.audioOnly)
+            }
             done++
         }
         worker = null

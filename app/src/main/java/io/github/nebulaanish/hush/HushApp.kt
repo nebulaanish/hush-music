@@ -18,6 +18,7 @@ class HushApp : Application() {
             Log.e("Hush", "yt-dlp init failed", e)
             return
         }
+        Analytics.init(this)
         Log.d("Hush", "init ok")
         updateExtractorDaily()
     }

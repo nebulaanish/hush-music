@@ -110,6 +110,7 @@ class MainActivity : AppCompatActivity() {
     fun isMusicTab(): Boolean = current === Players.musicView
 
     fun showTab(music: Boolean) {
+        Analytics.playbackSource(if (music) "music_tab" else "video_tab")
         switchTo(if (music) Players.music(this) else Players.video(this))
     }
 

@@ -4,3 +4,4 @@ local.properties
 *.apk
 .idea/
 keystore.properties
+google-services.json

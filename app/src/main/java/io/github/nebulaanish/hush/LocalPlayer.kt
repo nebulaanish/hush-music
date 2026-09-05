@@ -51,7 +51,7 @@ object LocalPlayer {
         app = ctx.applicationContext
         queue = items
         index = startIndex.coerceIn(items.indices)
-        // Two things playing at once is never wanted.
+        Analytics.playbackSource("local_file")
         Players.command("pause", 0)
         ContextCompat.startForegroundService(
             ctx, Intent(ctx, PlaybackService::class.java).setAction("start")
